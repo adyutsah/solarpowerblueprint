@@ -1,5 +1,9 @@
 component_id,label,brand_examples,price_low_php,price_high_php,source_note,last_updated
+panel_400w,400W solar panel (per unit),"Longi, Trina, Jinko",6000,8400,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+panel_450w,450W solar panel (per unit),"Longi, Trina, Jinko",6750,9450,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
 panel_500w,500W solar panel (per unit),"Longi, Trina, Jinko",7500,10500,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+panel_550w,550W solar panel (per unit),"Longi, Trina, Jinko",8250,11550,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+panel_600w,600W solar panel (per unit),"Longi, Trina, Jinko",9000,12600,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
 inverter_3kw,3kW hybrid inverter,"Deye, Growatt",28000,38000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
 inverter_5kw,5kW hybrid inverter,"Deye, Growatt",42000,55000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
 inverter_6kw,6kW hybrid inverter,"Deye, Growatt",50000,65000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA

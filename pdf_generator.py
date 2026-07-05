@@ -14,7 +14,7 @@ from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, CondPageBreak
 )
 
 styles = getSampleStyleSheet()
@@ -24,17 +24,32 @@ body = styles["BodyText"]
 small = ParagraphStyle("small", parent=body, fontSize=8, textColor=colors.grey)
 warn = ParagraphStyle("warn", parent=body, textColor=colors.HexColor("#993C1D"))
 
+# Plain strings in reportlab Tables do NOT wrap — they silently overflow
+# past the declared column width instead of breaking onto a new line.
+# Every cell that could contain more than a couple of words must be
+# wrapped in a Paragraph (which does wrap correctly) rather than passed
+# as a raw string.
+cell_style = ParagraphStyle("cell", parent=body, fontSize=8, leading=10)
+cell_style_bold = ParagraphStyle("cell_bold", parent=cell_style, fontName="Helvetica-Bold")
+
+
+def _cell(text, bold=False):
+    return Paragraph(str(text), cell_style_bold if bold else cell_style)
+
+
+def _header_row(labels):
+    return [_cell(label, bold=True) for label in labels]
+
 
 def _flags_table(flags):
     if not flags:
         return Paragraph("No issues flagged for this configuration.", body)
-    rows = [["Severity", "Note"]]
+    rows = [_header_row(["Severity", "Note"])]
     for f in flags:
-        rows.append([f["severity"].upper(), f["message"]])
-    t = Table(rows, colWidths=[25 * mm, 145 * mm])
+        rows.append([_cell(f["severity"].upper()), _cell(f["message"])])
+    t = Table(rows, colWidths=[25 * mm, 135 * mm])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F1EFE8")),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#B4B2A9")),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
@@ -44,20 +59,19 @@ def _flags_table(flags):
 
 
 def _bom_table(bom):
-    rows = [["Component", "Brand examples", "Qty", "Low (PHP)", "High (PHP)", "Priced as of"]]
+    rows = [_header_row(["Component", "Brand examples", "Qty", "Low (PHP)", "High (PHP)", "Priced as of"])]
     for item in bom["line_items"]:
         rows.append([
-            item["label"],
-            item["brand_examples"],
-            str(item["quantity"]),
-            f"{item['line_total_low']:,.0f}",
-            f"{item['line_total_high']:,.0f}",
-            item["last_updated"],
+            _cell(item["label"]),
+            _cell(item["brand_examples"]),
+            _cell(item["quantity"]),
+            _cell(f"{item['line_total_low']:,.0f}"),
+            _cell(f"{item['line_total_high']:,.0f}"),
+            _cell(item["last_updated"]),
         ])
-    t = Table(rows, colWidths=[45 * mm, 35 * mm, 15 * mm, 25 * mm, 25 * mm, 30 * mm])
+    t = Table(rows, colWidths=[42 * mm, 38 * mm, 12 * mm, 24 * mm, 24 * mm, 30 * mm])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#F1EFE8")),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#B4B2A9")),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
@@ -97,16 +111,15 @@ def build_pdf(sizing: dict, flags: list, bom: dict, meta: dict) -> bytes:
     fin = sizing.get("financials")
     if fin:
         rows = [
-            ["Metric", "Value"],
-            ["Estimated monthly production", f"{fin['monthly_production_kwh']} kWh"],
-            ["Estimated monthly savings", f"PHP {fin['monthly_savings_php']:,.0f}"],
-            ["Estimated payback period", f"{fin['payback_years']} years" if fin['payback_years'] else "N/A"],
+            _header_row(["Metric", "Value"]),
+            [_cell("Estimated monthly production"), _cell(f"{fin['monthly_production_kwh']} kWh")],
+            [_cell("Estimated monthly savings"), _cell(f"PHP {fin['monthly_savings_php']:,.0f}")],
+            [_cell("Estimated payback period"), _cell(f"{fin['payback_years']} years" if fin['payback_years'] else "N/A")],
         ]
         t = Table(rows, colWidths=[80 * mm, 80 * mm])
         t.setStyle(TableStyle([
             ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E1F5EE")),
             ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#5DCAA5")),
-            ("FONTSIZE", (0, 0), (-1, -1), 9),
             ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
             ("TOPPADDING", (0, 0), (-1, -1), 6),
         ]))
@@ -132,22 +145,21 @@ def build_pdf(sizing: dict, flags: list, bom: dict, meta: dict) -> bytes:
     dcc = sizing["dc_cable"]
     acb = sizing["ac_breaker"]
     tech_rows = [
-        ["Item", "Spec"],
-        ["Target system size", f"{sizing['target_kwp']} kWp"],
-        ["Panel count", f"{sizing['panels']['target_panel_count']} x {sizing['panels']['panel_wattage']}W"],
-        ["Achieved system size", f"{sizing['panels']['achieved_kwp']} kWp"],
-        ["Inverter", f"{inv['inverter_kw']} kW (DC:AC ratio {inv['dc_ac_ratio']})"],
-        ["String configuration", f"{strings['num_strings']} string(s) x {strings['panels_per_string']} panels"],
-        ["String voltage (Voc)", f"{strings['string_voc']} V"],
-        ["DC breaker", f"{dcb['breaker_a']} A"],
-        ["DC cable size", f"{dcc['cable_mm2']} mm² PV1-F"],
-        ["AC breaker", f"{acb['breaker_a']} A"],
+        _header_row(["Item", "Spec"]),
+        [_cell("Target system size"), _cell(f"{sizing['target_kwp']} kWp")],
+        [_cell("Panel count"), _cell(f"{sizing['panels']['target_panel_count']} x {sizing['panels']['panel_wattage']}W")],
+        [_cell("Achieved system size"), _cell(f"{sizing['panels']['achieved_kwp']} kWp")],
+        [_cell("Inverter"), _cell(f"{inv['inverter_kw']} kW (DC:AC ratio {inv['dc_ac_ratio']})")],
+        [_cell("String configuration"), _cell(f"{strings['num_strings']} string(s) x {strings['panels_per_string']} panels")],
+        [_cell("String voltage (Voc)"), _cell(f"{strings['string_voc']} V")],
+        [_cell("DC breaker"), _cell(f"{dcb['breaker_a']} A")],
+        [_cell("DC cable size"), _cell(f"{dcc['cable_mm2']} mm\u00b2 PV1-F")],
+        [_cell("AC breaker"), _cell(f"{acb['breaker_a']} A")],
     ]
     t = Table(tech_rows, colWidths=[70 * mm, 90 * mm])
     t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#E6F1FB")),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#85B7EB")),
-        ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
     ]))
@@ -155,10 +167,15 @@ def build_pdf(sizing: dict, flags: list, bom: dict, meta: dict) -> bytes:
     story.append(Spacer(1, 4 * mm))
     story.append(Paragraph("Validation flags", styles["Heading3"]))
     story.append(_flags_table(flags))
-    story.append(Spacer(1, 6 * mm))
 
     # --- Section C: Bill of Materials -----------------------------------
-    story.append(PageBreak())
+    # CondPageBreak only breaks if less than the given space remains on the
+    # current page — this avoids the double-break bug you get from pairing
+    # a trailing Spacer with a hard PageBreak (a Spacer that doesn't fit
+    # flows onto a fresh page by itself, then the PageBreak bumps everything
+    # else to the page after that, leaving a genuinely blank page between).
+    story.append(CondPageBreak(50 * mm))
+    story.append(Spacer(1, 6 * mm))
     story.append(Paragraph("Section C — Bill of materials", h2))
     if bom["line_items"]:
         story.append(_bom_table(bom))

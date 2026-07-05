@@ -5,9 +5,9 @@ import layer2_validation as L2
 import layer3_pricing as L3
 from pdf_generator import build_pdf
 
-st.set_page_config(page_title="PH Solar Blueprint", page_icon=":sunny:", layout="centered")
+st.set_page_config(page_title="Solar Power Blueprint", page_icon=":sunny:", layout="centered")
 
-st.title("Philippine solar blueprint generator")
+st.title("Solar Power Blueprint")
 st.caption(
     "Free, offline sizing tool for homeowners and micro-installers. "
     "No AI calls, no live scraping — every number here comes from fixed "
@@ -59,27 +59,24 @@ with col4:
         "Max panels your roof can fit", min_value=1, value=12, step=1,
         help="Rough count of standard-size panel slots available, accounting for shading, vents, etc.")
 
-# Run Layer 1 base sizing (no cost yet)
+# Run Layer 1 base sizing (no cost yet) — this is just the initial suggestion;
+# panel wattage/count can be overridden in Step 2 below.
 daily_kwh = L1.estimate_daily_kwh(monthly_bill, monthly_kwh, blended_rate)
 target_kwp = L1.calculate_target_kwp(daily_kwh)
-panels = L1.size_panels(target_kwp, available_roof_slots=available_roof_slots)
-inverter = L1.size_inverter(panels["achieved_kwp"])
-strings = L1.size_strings(panels["target_panel_count"])
-dc_breaker = L1.size_dc_breaker(strings["num_strings"])
-dc_cable = L1.size_dc_cable(strings["num_strings"])
-ac_breaker = L1.size_ac_breaker(inverter["inverter_kw"])
+panels_suggested = L1.size_panels(target_kwp, available_roof_slots=available_roof_slots)
 
 st.subheader("Baseline blueprint")
 b1, b2, b3 = st.columns(3)
 b1.metric("Target size", f"{target_kwp:.2f} kWp")
-b2.metric("Panels needed", f"{panels['target_panel_count']} x {panels['panel_wattage']}W")
-b3.metric("Achieved size", f"{panels['achieved_kwp']} kWp")
+b2.metric("Panels needed", f"{panels_suggested['target_panel_count']} x {panels_suggested['panel_wattage']}W")
+b3.metric("Achieved size", f"{panels_suggested['achieved_kwp']} kWp")
 
-if not panels["roof_fits"]:
+if not panels_suggested["roof_fits"]:
     st.warning(
         f"Your roof slot count ({available_roof_slots}) can't fit the target panel "
-        f"count ({panels['target_panel_count']}). Consider panels rated "
-        f"{panels.get('suggested_min_wattage')}W or higher, or reduce your target."
+        f"count ({panels_suggested['target_panel_count']}). Consider panels rated "
+        f"{panels_suggested.get('suggested_min_wattage')}W or higher, or reduce your target, "
+        f"or adjust the panel customization settings below."
     )
 
 st.divider()
@@ -89,9 +86,62 @@ st.divider()
 # ---------------------------------------------------------------------
 st.header("Step 2 — customize your system")
 
+st.subheader("Panel customization")
+st.caption("Defaults come from the baseline suggestion above — adjust freely to match a specific panel you're quoting.")
+col_p1, col_p2 = st.columns(2)
+with col_p1:
+    panel_wattage_custom = st.number_input(
+        "Panel wattage (W)", min_value=300, max_value=700,
+        value=panels_suggested["panel_wattage"], step=10,
+    )
+with col_p2:
+    panel_count_custom = st.number_input(
+        "Number of panels", min_value=1,
+        value=panels_suggested["target_panel_count"], step=1,
+    )
+
+achieved_kwp_custom = round((panel_count_custom * panel_wattage_custom) / 1000, 2)
+roof_fits_custom = panel_count_custom <= available_roof_slots
+
+panels = {
+    "target_panel_count": panel_count_custom,
+    "panel_wattage": panel_wattage_custom,
+    "achieved_kwp": achieved_kwp_custom,
+    "roof_fits": roof_fits_custom,
+    "available_roof_slots": available_roof_slots,
+}
+
+if not roof_fits_custom:
+    st.warning(
+        f"{panel_count_custom} panels won't fit your available roof slots "
+        f"({available_roof_slots}). Reduce the panel count or increase panel wattage."
+    )
+
+if panel_wattage_custom != 500:
+    st.caption(
+        "Note: string voltage/current and cable/breaker sizing below still assume "
+        "~500W-class panel electrical specs (Voc/Isc) for simplicity. For a panel "
+        "wattage far from 500W, double-check Voc/Isc against the actual datasheet."
+    )
+
+c1, c2 = st.columns(2)
+with c1:
+    st.metric("Achieved system size", f"{achieved_kwp_custom} kWp")
+with c2:
+    st.metric("Panel count used downstream", f"{panel_count_custom}")
+
+# Everything below now sizes off the (possibly overridden) panel choice above.
+inverter = L1.size_inverter(panels["achieved_kwp"])
+strings = L1.size_strings(panels["target_panel_count"])
+dc_breaker = L1.size_dc_breaker(strings["num_strings"])
+dc_cable = L1.size_dc_cable(strings["num_strings"])
+ac_breaker = L1.size_ac_breaker(inverter["inverter_kw"])
+
+st.divider()
+
 col5, col6 = st.columns(2)
 with col5:
-    system_type = st.selectbox("System type", ["grid-tie", "hybrid", "off-grid"])
+    system_type = st.selectbox("System type", ["hybrid", "grid-tie", "off-grid"])
 with col6:
     battery_choice = st.selectbox(
         "Battery bank", ["None", "5 kWh", "10 kWh", "15 kWh", "20 kWh"],
@@ -156,7 +206,7 @@ for size in [10, 5]:
         remaining -= n * size
 
 component_requests = {
-    "panel_500w": panels["target_panel_count"],
+    f"panel_{int(panel_wattage_custom)}w": panels["target_panel_count"],
     f"inverter_{inverter['inverter_kw']}kw": 1,
     "dc_breaker": 1,
     "ac_breaker": 1,
