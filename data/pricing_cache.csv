@@ -1,0 +1,23 @@
+component_id,label,brand_examples,price_low_php,price_high_php,source_note,last_updated
+panel_500w,500W solar panel (per unit),"Longi, Trina, Jinko",7500,10500,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_3kw,3kW hybrid inverter,"Deye, Growatt",28000,38000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_5kw,5kW hybrid inverter,"Deye, Growatt",42000,55000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_6kw,6kW hybrid inverter,"Deye, Growatt",50000,65000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_8kw,8kW hybrid inverter,"Deye, Growatt",65000,85000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_10kw,10kW hybrid inverter,"Deye, Growatt",85000,110000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_12kw,12kW hybrid inverter,"Deye, Growatt",105000,135000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_15kw,15kW hybrid inverter,"Deye, Growatt",130000,165000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+inverter_20kw,20kW hybrid inverter,"Deye, Growatt",170000,210000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+battery_5kwh,5kWh LiFePO4 battery,"Deye, Growatt, Tomzn",90000,130000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+battery_10kwh,10kWh LiFePO4 battery,"Deye, Growatt, Tomzn",170000,230000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+dc_breaker,DC circuit breaker (per unit),Tomzn,800,1800,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+ac_breaker,AC circuit breaker (per unit),Tomzn,600,1500,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+spd_dc,DC surge protective device,Tomzn,1500,3000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+spd_ac,AC surge protective device,Tomzn,1200,2500,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+cable_4mm,PV1-F solar cable 4mm2 (per meter),Generic,35,55,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+cable_6mm,PV1-F solar cable 6mm2 (per meter),Generic,50,75,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+cable_10mm,PV1-F solar cable 10mm2 (per meter),Generic,75,110,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+cable_16mm,PV1-F solar cable 16mm2 (per meter),Generic,110,150,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+cable_25mm,PV1-F solar cable 25mm2 (per meter),Generic,160,210,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+mounting_rail_set,Roof mounting rail + clamp set (per panel),Generic,1200,2200,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
+labor_install,Installation labor (per kWp),Local installer average,8000,15000,PLACEHOLDER - replace with your own sourced quote,2026-01-01 SAMPLE DATA
