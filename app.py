@@ -291,3 +291,55 @@ st.caption(
     "Built as a free planning tool. Not a substitute for a licensed Professional "
     "Electrical Engineer's review of your final as-built design."
 )
+
+# ---------------------------------------------------------------------
+# Installer tools — price list editor
+# ---------------------------------------------------------------------
+with st.expander("🔧 Installer tools: update price list", expanded=False):
+    st.markdown(
+        "Edit prices below, then download the updated file and replace "
+        "`data/pricing_cache.csv` in your GitHub repo (**Add file → Upload "
+        "files**, drag in the downloaded CSV, commit). Streamlit will "
+        "redeploy automatically with the new prices within a minute or two."
+    )
+    st.caption(
+        "Heads up: edits here are **not saved automatically** — this table "
+        "only exists in your browser until you download it. Refreshing the "
+        "page or closing the tab without downloading loses your changes."
+    )
+
+    pricing_df = L3.load_pricing_dataframe()
+
+    edited_df = st.data_editor(
+        pricing_df,
+        num_rows="dynamic",
+        use_container_width=True,
+        key="pricing_editor",
+        column_config={
+            "component_id": st.column_config.TextColumn(
+                "Component ID", help="Must exactly match the ID the app looks up "
+                                      "(e.g. panel_500w, inverter_5kw). Don't change "
+                                      "existing IDs unless you also update the code."),
+            "label": st.column_config.TextColumn("Label"),
+            "brand_examples": st.column_config.TextColumn("Brand examples"),
+            "price_low_php": st.column_config.NumberColumn("Low (PHP)", min_value=0, format="%.0f"),
+            "price_high_php": st.column_config.NumberColumn("High (PHP)", min_value=0, format="%.0f"),
+            "source_note": st.column_config.TextColumn("Source note"),
+            "last_updated": st.column_config.TextColumn("Last updated", help="e.g. 2026-07-08 Shopee/Lazada check"),
+        },
+    )
+
+    problems = L3.validate_pricing_dataframe(edited_df)
+    if problems:
+        for p in problems:
+            st.error(p)
+    else:
+        st.success("No issues found — ready to download.")
+
+    st.download_button(
+        "Download updated pricing_cache.csv",
+        data=L3.dataframe_to_csv_bytes(edited_df),
+        file_name="pricing_cache.csv",
+        mime="text/csv",
+        disabled=bool(problems),
+    )

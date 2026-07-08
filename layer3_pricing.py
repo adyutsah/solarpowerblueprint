@@ -19,6 +19,11 @@ import os
 
 CSV_PATH = os.path.join(os.path.dirname(__file__), "data", "pricing_cache.csv")
 
+CSV_COLUMNS = [
+    "component_id", "label", "brand_examples",
+    "price_low_php", "price_high_php", "source_note", "last_updated",
+]
+
 
 def load_pricing_table(path=CSV_PATH):
     table = {}
@@ -84,3 +89,53 @@ def build_bom(component_requests: dict, table=None):
         "total_low_php": round(total_low, 2),
         "total_high_php": round(total_high, 2),
     }
+
+
+# ---------------------------------------------------------------------------
+# Price list editor helpers (used by the in-app "installer tools" table)
+# ---------------------------------------------------------------------------
+
+def load_pricing_dataframe(path=CSV_PATH):
+    """Load the pricing CSV as a pandas DataFrame, ordered/typed for editing."""
+    import pandas as pd
+    df = pd.read_csv(path, dtype=str).fillna("")
+    df["price_low_php"] = pd.to_numeric(df["price_low_php"], errors="coerce")
+    df["price_high_php"] = pd.to_numeric(df["price_high_php"], errors="coerce")
+    return df[CSV_COLUMNS]
+
+
+def validate_pricing_dataframe(df) -> list:
+    """Return a list of human-readable problem strings. Empty list = OK.
+    This is intentionally forgiving (warns, doesn't silently drop rows) so
+    the person editing sees exactly what to fix before downloading."""
+    problems = []
+
+    ids = df["component_id"].astype(str).str.strip()
+    if (ids == "").any():
+        problems.append("One or more rows has a blank component_id.")
+    dupes = ids[ids.duplicated() & (ids != "")].unique().tolist()
+    if dupes:
+        problems.append(f"Duplicate component_id values found: {', '.join(dupes)}. "
+                         f"Each component_id must be unique — the app looks up "
+                         f"prices by this exact value.")
+
+    if df["price_low_php"].isna().any():
+        problems.append("One or more rows has a missing or non-numeric price_low_php.")
+    if df["price_high_php"].isna().any():
+        problems.append("One or more rows has a missing or non-numeric price_high_php.")
+
+    bad_range = df[
+        df["price_low_php"].notna() & df["price_high_php"].notna()
+        & (df["price_low_php"] > df["price_high_php"])
+    ]
+    if len(bad_range) > 0:
+        problems.append(
+            "price_low_php is greater than price_high_php for: "
+            + ", ".join(bad_range["component_id"].astype(str).tolist())
+        )
+
+    return problems
+
+
+def dataframe_to_csv_bytes(df) -> bytes:
+    return df[CSV_COLUMNS].to_csv(index=False).encode("utf-8")

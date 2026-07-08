@@ -94,6 +94,26 @@ real prices):
    redeploy the app with your change within a minute or two. No separate
    "publish" step needed.
 
+### Updating prices using the in-app price list editor
+
+The app has a **"🔧 Installer tools: update price list"** section at the
+bottom (collapsed by default). Open it, edit prices directly in the table
+(add rows, remove rows, change any value), then click **Download updated
+pricing_cache.csv**.
+
+To get that file live on your deployed app:
+
+1. Go to your repo's `data` folder on GitHub.
+2. Click **Add file → Upload files**.
+3. Drag in the CSV you just downloaded — GitHub will detect it has the
+   same filename and offer to replace the existing one.
+4. Commit. Streamlit redeploys automatically within a minute or two.
+
+**Important:** the in-app editor does **not** save anything by itself —
+it only exists in your browser tab. If you close the tab or refresh the
+page without clicking Download, your edits are gone. Always download
+before you navigate away.
+
 ## Troubleshooting
 
 - **"ModuleNotFoundError" in the deploy log**: double-check
